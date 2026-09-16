@@ -1,0 +1,14 @@
+[
+  {"id":"northAmerica","subregion":"Northern America","label":"North America","path":"/north-america/"},
+  {"id":"southAsia","subregion":"Southern Asia","label":"South Asia","path":"/tabernacle-ministries/"},
+  {"id":"southeastAsia","subregion":"South-Eastern Asia","label":"Southeast Asia","path":"/southeast-asia/"},
+  {"id":"westAsia","subregion":"Western Asia","label":"Middle East","path":"/middle-east/"},
+  {"id":"northAfrica","subregion":"Northern Africa","label":"Northern Africa","path":"/northern-africa/"},
+  {"id":"centralAmerica","subregion":"Central America","label":"Central America","path":"/central-america/"},
+  {"id":"middleAfrica","subregion":"Middle Africa","label":"Middle Africa","path":"/middle-africa/"},
+  {"id":"eastAfrica","subregion":"Eastern Africa","label":"Eastern Africa","path":"/eastern-africa/"},
+  {"id":"westEurope","subregion":"Western Europe","label":"Western Europe","path":"/western-europe/"},
+  {"id":"eastAsia","subregion":"Eastern Asia","label":"Eastern Asia","path":"/eastern-asia/"},
+  {"id":"westAfrica","subregion":"Western Africa","label":"Western Africa","path":"/western-africa/"},
+  {"id":"centralAsia","subregion":"Central Asia","label":"Central Asia","path":"/our-partners-in-central-asia/"}
+]

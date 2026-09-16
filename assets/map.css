@@ -1,0 +1,30 @@
+.mdm-partner-map { --mdm-map-blue: #7fbdd6; --mdm-map-hover: #007cba; width: 100%; color: #34424a; }
+.mdm-partner-map .mdm-map-help { text-align: center; margin: 0 0 .65rem; font-size: .95rem; }
+.mdm-partner-map .mdm-map-viewport { overflow: hidden; width: 100%; border-radius: 8px; }
+.mdm-partner-map .mdm-map-svg { display: block; width: 100%; height: auto; aspect-ratio: 1000 / 560; overflow: hidden; }
+.mdm-partner-map .mdm-map-svg path { stroke: #f9f9f9; stroke-width: .8; vector-effect: non-scaling-stroke; }
+.mdm-partner-map .mdm-map-inactive { fill: #e0e0e0; pointer-events: none; }
+.mdm-partner-map .mdm-map-region { fill: var(--mdm-map-blue); cursor: pointer; }
+.mdm-partner-map .mdm-map-region:hover,
+.mdm-partner-map .mdm-map-region:focus { fill: var(--mdm-map-hover); outline: none; }
+.mdm-partner-map .mdm-map-region:focus path { stroke: #143a4d; stroke-width: 2.5; }
+.mdm-partner-map .mdm-map-controls { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: .4rem; margin-bottom: .35rem; }
+.mdm-partner-map .mdm-map-controls[hidden] { display: none; }
+.mdm-partner-map .mdm-map-controls button { border: 1px solid #b6ceda; background: #fff; color: #075675; font: inherit; line-height: 1.2; min-width: 44px; min-height: 44px; padding: .45rem .65rem; border-radius: 5px; cursor: pointer; }
+.mdm-partner-map .mdm-map-controls button:hover { background: #eef7fb; }
+.mdm-partner-map .mdm-map-controls button:focus-visible,
+.mdm-partner-map summary:focus-visible,
+.mdm-partner-map .mdm-map-directory a:focus-visible { outline: 3px solid #007cba; outline-offset: 3px; }
+.mdm-partner-map .mdm-map-controls button:disabled { opacity: .4; cursor: default; }
+.mdm-partner-map .mdm-map-status { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); }
+.mdm-partner-map[data-zoomed] .mdm-map-svg { touch-action: none; cursor: grab; }
+.mdm-partner-map .mdm-map-directory { margin: .6rem 0 0; border-top: 1px solid #e4edf1; padding-top: .6rem; }
+.mdm-partner-map .mdm-map-directory summary { cursor: pointer; color: #075675; width: fit-content; padding: .5rem 0; font-weight: 600; }
+.mdm-partner-map .mdm-map-directory ul { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); list-style: none; gap: .2rem 1rem; margin: .4rem 0 0; padding: 0; }
+.mdm-partner-map .mdm-map-directory li { margin: 0; padding: 0; }
+.mdm-partner-map .mdm-map-directory a { display: inline-block; color: #075675; padding: .6rem .1rem; text-decoration: underline; text-underline-offset: .18em; }
+@media (max-width: 600px) {
+    .mdm-partner-map .mdm-map-help { font-size: .85rem; }
+    .mdm-partner-map .mdm-map-directory ul { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .15rem .7rem; }
+    .mdm-partner-map .mdm-map-controls { justify-content: center; }
+}
