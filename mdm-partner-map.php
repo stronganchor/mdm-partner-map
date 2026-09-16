@@ -3,7 +3,7 @@
  * Plugin Name: MDM Partner Map
  * Plugin URI: https://github.com/stronganchor/mdm-partner-map
  * Description: A small, accessible, self-contained regional partner map for Mission Driven Ministries.
- * Version: 1.0.0
+ * Version: 1.0.1
  * Requires at least: 6.0
  * Requires PHP: 7.4
  * Update URI: https://github.com/stronganchor/mdm-partner-map
@@ -19,7 +19,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-const VERSION = '1.0.0';
+const VERSION = '1.0.1';
 
 /** Bundled data only: never accept a file, URL, map name, or markup from a request. */
 function data(string $name): array {
@@ -71,15 +71,8 @@ function render($atts = []): string {
     ob_start();
     ?>
     <div class="mdm-partner-map" data-mdm-partner-map data-version="<?php echo esc_attr(VERSION); ?>">
-        <p class="mdm-map-help" id="<?php echo esc_attr($id . '-help'); ?>">Choose a blue region to meet our partners.</p>
-        <div class="mdm-map-controls" hidden>
-            <button type="button" data-map-action="in" aria-label="Zoom in on partner map">+</button>
-            <button type="button" data-map-action="out" aria-label="Zoom out of partner map">−</button>
-            <button type="button" data-map-action="reset">Reset map</button>
-            <span class="mdm-map-status" aria-live="polite"></span>
-        </div>
         <div class="mdm-map-viewport">
-            <svg class="mdm-map-svg" viewBox="0 0 1000 560" role="group" aria-labelledby="<?php echo esc_attr($id . '-title'); ?>" aria-describedby="<?php echo esc_attr($id . '-help'); ?>" xmlns="http://www.w3.org/2000/svg">
+            <svg class="mdm-map-svg" viewBox="0 0 1000 560" role="group" aria-labelledby="<?php echo esc_attr($id . '-title'); ?>" xmlns="http://www.w3.org/2000/svg">
                 <title id="<?php echo esc_attr($id . '-title'); ?>">Mission Driven Ministries partner regions</title>
                 <?php foreach ($map['regions'] as $region) : ?>
                     <?php if (isset($by_region[$region['name']])) : $partner = $by_region[$region['name']]; ?>
@@ -92,6 +85,10 @@ function render($atts = []): string {
                     <?php endif; ?>
                 <?php endforeach; ?>
             </svg>
+            <div class="mdm-map-loading" role="status" aria-live="polite" aria-atomic="true">
+                <span class="mdm-map-spinner" aria-hidden="true"></span>
+                <span class="mdm-map-loading-text"></span>
+            </div>
         </div>
         <details class="mdm-map-directory">
             <summary>Browse partners by region</summary>

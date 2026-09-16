@@ -4,7 +4,7 @@ A deliberately small, site-specific WordPress plugin for Mission Driven Ministri
 
 ## Use and editing
 
-Place `[mdm_partner_map]` in the homepage Elementor Shortcode widget. Region links also appear in an expandable keyboard/touch-friendly directory. Links and the map work without JavaScript; the optional local script adds zoom/reset and dragging when zoomed. Plus/minus, arrow keys and Escape work while a region has keyboard focus.
+Place `[mdm_partner_map]` in the homepage Elementor Shortcode widget. Region links also appear in an expandable keyboard/touch-friendly directory. Links and the map work without JavaScript. The optional local script immediately highlights the selected region and shows a loading spinner while the browser opens its destination. It does not intercept or delay native navigation. Modified/new-tab clicks are unchanged, returning with Back clears the indicator, and it resets after 15 seconds if navigation was cancelled. Reduced-motion preferences disable the spinner animation. The full map remains visible without zoom controls or introductory instructions.
 
 The current twelve destinations and labels are intentionally fixed in `data/partners.json`, matching the site's original map. Edit that reviewed source and ship a versioned update when a partner region changes; the linked partner pages remain editable normally in WordPress/Elementor. There is no arbitrary-HTML map editor. All labels, paths and SVG attributes are escaped at output. Request parameters and shortcode attributes do not control the map.
 
@@ -30,7 +30,9 @@ The checked-in `data/regions.json` is generated from the public-domain Natural E
 
 Stable slug/repository/folder: `mdm-partner-map`. Bootstrap Plugin Update Checker 5.7 on `plugins_loaded`, track GitHub `main`, use releases with an asset named `mdm-partner-map-vX.Y.Z.zip`. No site GitHub token is required for this public repository.
 
-For releases, bump the plugin header, `VERSION`, `readme.txt`, and `package.json`; run all tests; review changes; commit, push, tag, and publish a release. Package only `mdm-partner-map.php`, `assets/`, `data/`, `plugin-update-checker/`, `readme.txt`, `README.md`, `LICENSE`, and `THIRD-PARTY.md` under one `mdm-partner-map/` folder. Never package `node_modules`, tools, tests, CI files, or local deployment evidence. The update checker's full vendor source/license is retained.
+For releases, bump the plugin header, `VERSION`, `readme.txt`, `package.json`, and lockfile root versions; run all tests; review changes; commit, push, tag, and publish a release. Package only `mdm-partner-map.php`, `assets/`, `data/`, `plugin-update-checker/`, `readme.txt`, `README.md`, `LICENSE`, and `THIRD-PARTY.md` under one `mdm-partner-map/` folder. Never package `node_modules`, tools, tests, CI files, or local deployment evidence. The update checker's full vendor source/license is retained.
+
+For loading-feedback browser QA, append `?loading-test=1` to the local preview URL for an eight-second destination response, or `?loading-test=stay` for an eight-second HTTP 204 response that leaves the map visible for spinner inspection. Check desktop/mobile layout, keyboard activation, Back recovery, and the 15-second cancelled-navigation reset. These fixtures never ship to production.
 
 Review dependency advisories during regular repository security checks. Upgrade the bundled update checker deliberately and retest. The runtime map has no dependency on the Node build packages.
 

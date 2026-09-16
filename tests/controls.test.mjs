@@ -3,73 +3,126 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
 const script = readFileSync(new URL('../assets/map.js', import.meta.url), 'utf8');
-function mount() {
-    const listeners = {}, attributes = {}, buttons = { in: {}, out: {}, reset: {} }, status = {};
-    const controls = {
-        hidden: true,
-        querySelector: selector => selector === '.mdm-map-status' ? status : buttons[selector.match(/"(\w+)"/)[1]],
-        addEventListener: (event, fn) => { listeners['controls-' + event] = fn; }
-    };
-    const svg = {
+function element(attributes = {}) {
+    return {
+        attributes, textContent: '', dataset: {},
         setAttribute: (name, value) => { attributes[name] = value; },
-        addEventListener: (event, fn) => { listeners[event] = fn; },
-        getBoundingClientRect: () => ({ width: 1000, height: 560 }),
-        setPointerCapture() {}, hasPointerCapture: () => true, releasePointerCapture() {}
+        removeAttribute: name => { delete attributes[name]; },
+        getAttribute: name => attributes[name] ?? null,
+        hasAttribute: name => Object.hasOwn(attributes, name)
     };
-    const root = {
-        dataset: {}, querySelector: selector => selector === '.mdm-map-svg' ? svg : controls,
-        toggleAttribute: (name, value) => { attributes[name] = value; }
-    };
-    const timeouts = [];
-    const context = { document: { querySelectorAll: () => [root] }, setTimeout: fn => timeouts.push(fn) };
-    runInNewContext(script, context);
-    const click = action => listeners['controls-click']({ target: { closest: () => ({ dataset: { mapAction: action } }) } });
-    const key = value => { let prevented = false; listeners.keydown({ key: value, preventDefault: () => { prevented = true; } }); return prevented; };
-    return { context, controls, attributes, buttons, status, listeners, click, key, timeouts };
 }
-test('Zoom is bounded, reset restores the full map, and controls announce state', () => {
+function mount() {
+    const listeners = {}, windowListeners = {}, timers = new Map();
+    const root = element(), svg = element(), status = element();
+    const region = element({ href: '/north-america/', 'aria-label': 'North America partners' });
+    const directory = element({ href: '/middle-east/' });
+    directory.textContent = 'Middle East';
+    root.querySelector = selector => selector === '.mdm-map-svg' ? svg : status;
+    root.contains = link => link === region || link === directory;
+    root.addEventListener = (event, fn) => { listeners[event] = fn; };
+    let timerId = 0;
+    const context = {
+        document: { querySelectorAll: () => [root] },
+        window: { addEventListener: (event, fn) => { windowListeners[event] = fn; } },
+        setTimeout: (fn, delay) => { const id = ++timerId; timers.set(id, { fn, delay }); return id; },
+        clearTimeout: id => timers.delete(id)
+    };
+    runInNewContext(script, context);
+    function click(overrides = {}, link = region) {
+        const event = {
+            button: 0, target: { closest: () => link },
+            preventDefault: () => assert.fail('Native navigation must never be cancelled'),
+            stopPropagation: () => assert.fail('Click propagation must remain native'),
+            ...overrides
+        };
+        listeners.click(event);
+    }
+    return { root, svg, status, region, directory, listeners, windowListeners, timers, context, click };
+}
+test('Region click shows feedback synchronously without intercepting navigation', () => {
     const m = mount();
-    assert.equal(m.controls.hidden, false);
-    assert.equal(m.buttons.out.disabled, true);
-    assert.equal(m.attributes.viewBox, '0 0 1000 560');
-    for (let i = 0; i < 20; i++) m.click('in');
-    assert.equal(m.buttons.in.disabled, true);
-    assert.match(m.status.textContent, /400 percent/);
-    m.click('reset');
-    assert.equal(m.attributes.viewBox, '0 0 1000 560');
-    assert.equal(m.attributes['data-zoomed'], false);
-    for (let i = 0; i < 20; i++) m.click('out');
-    assert.equal(m.attributes.viewBox, '0 0 1000 560');
+    m.click();
+    assert.equal(m.root.hasAttribute('data-loading'), true);
+    assert.equal(m.svg.getAttribute('aria-busy'), 'true');
+    assert.equal(m.region.hasAttribute('data-loading-link'), true);
+    assert.equal(m.status.textContent, 'Loading North America partners…');
+    assert.equal([...m.timers.values()][0].delay, 15000);
 });
-test('Keyboard zoom and pan work, and ordinary navigation keys are untouched', () => {
+test('Keyboard Enter click and directory links receive the same feedback', () => {
     const m = mount();
-    assert.equal(m.key('Tab'), false);
-    assert.equal(m.key('ArrowRight'), false);
-    assert.equal(m.key('+'), true);
-    const before = m.attributes.viewBox;
-    assert.equal(m.key('ArrowRight'), true);
-    assert.notEqual(m.attributes.viewBox, before);
-    m.key('Escape');
-    assert.equal(m.attributes.viewBox, '0 0 1000 560');
+    m.click({ detail: 0 }, m.directory);
+    assert.equal(m.status.textContent, 'Loading Middle East…');
+    assert.equal(m.directory.hasAttribute('data-loading-link'), true);
 });
-test('Drag pans but cannot accidentally follow a region; a normal click is untouched', () => {
+test('Modifier keys, non-primary buttons and cancelled clicks are untouched', () => {
+    for (const event of [{ ctrlKey: true }, { metaKey: true }, { shiftKey: true },
+        { altKey: true }, { button: 1 }, { button: 2 }, { defaultPrevented: true }]) {
+        const m = mount();
+        m.click(event);
+        assert.equal(m.root.hasAttribute('data-loading'), false);
+        assert.equal(m.status.textContent, '');
+        assert.equal(m.timers.size, 0);
+    }
+});
+test('New-window, download, missing-href, foreign and non-link targets are ignored', () => {
+    for (const attrs of [{ target: '_blank' }, { target: 'named-window' }, { download: '' }, { href: '' }]) {
+        const m = mount();
+        Object.assign(m.region.attributes, attrs);
+        m.click();
+        assert.equal(m.root.hasAttribute('data-loading'), false);
+    }
     const m = mount();
-    m.click('in');
-    const before = m.attributes.viewBox;
-    m.listeners.pointerdown({ pointerId: 1, button: 0, clientX: 500, clientY: 200 });
-    m.listeners.pointermove({ pointerId: 1, clientX: 550, clientY: 210 });
-    assert.notEqual(m.attributes.viewBox, before);
-    m.listeners.pointerup({ pointerId: 1 });
-    let prevented = false;
-    m.listeners.click({ preventDefault: () => { prevented = true; }, stopPropagation() {} });
-    assert.equal(prevented, true);
-    prevented = false;
-    m.listeners.click({ preventDefault: () => { prevented = true; }, stopPropagation() {} });
-    assert.equal(prevented, false);
+    m.click({}, null);
+    m.click({}, element({ href: '/unrelated/' }));
+    assert.equal(m.timers.size, 0);
+});
+test('Explicit self targets retain feedback', () => {
+    const m = mount();
+    m.region.setAttribute('target', '_self');
+    m.click();
+    assert.equal(m.root.hasAttribute('data-loading'), true);
+});
+test('Back/forward restore clears the previous indicator and pending timer', () => {
+    const m = mount();
+    m.click();
+    m.windowListeners.pageshow({ persisted: true });
+    assert.equal(m.root.hasAttribute('data-loading'), false);
+    assert.equal(m.svg.hasAttribute('aria-busy'), false);
+    assert.equal(m.region.hasAttribute('data-loading-link'), false);
+    assert.equal(m.status.textContent, '');
+    assert.equal(m.timers.size, 0);
+});
+test('Cancelled navigation recovers after timeout, and another click stays usable', () => {
+    const m = mount();
+    m.click();
+    [...m.timers.values()][0].fn();
+    assert.equal(m.root.hasAttribute('data-loading'), false);
+    assert.equal(m.svg.hasAttribute('aria-busy'), false);
+    assert.equal(m.region.hasAttribute('data-loading-link'), false);
+    assert.equal(m.status.textContent, '');
+    m.click({}, m.directory);
+    assert.equal(m.status.textContent, 'Loading Middle East…');
+});
+test('A second choice replaces selection and has just one recovery timer', () => {
+    const m = mount();
+    m.click();
+    m.click({}, m.directory);
+    assert.equal(m.region.hasAttribute('data-loading-link'), false);
+    assert.equal(m.directory.hasAttribute('data-loading-link'), true);
+    assert.equal(m.timers.size, 1);
 });
 test('Duplicate script execution does not register duplicate behavior', () => {
     const m = mount();
-    const listener = m.listeners['controls-click'];
+    const listener = m.listeners.click;
     runInNewContext(script, m.context);
-    assert.equal(m.listeners['controls-click'], listener);
+    assert.equal(m.listeners.click, listener);
+});
+test('No zoom or instruction UI remains; loading respects reduced motion', () => {
+    const css = readFileSync(new URL('../assets/map.css', import.meta.url), 'utf8');
+    assert.doesNotMatch(script, /pointerdown|pointermove|viewBox|data-map-action/);
+    assert.doesNotMatch(css, /mdm-map-controls|mdm-map-help|touch-action:\s*none/);
+    assert.match(css, /prefers-reduced-motion: reduce/);
+    assert.match(css, /animation: none/);
+    assert.match(css, /pointer-events: none/);
 });
